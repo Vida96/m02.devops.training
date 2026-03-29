@@ -37,3 +37,16 @@ blocks:
             - cd 1-tdd && python -m pytest test_factorial.py -v
             - cd ..
             - cd 2-unit-testing && python -m pytest test_math_sum.py -v
+  - name: Integration tests
+    dependencies:
+      - Tests
+    task:
+      jobs:
+        - name: Integration tests
+          commands:
+            - cache restore
+            - cd 3-integration-testing && python -m pytest test_integration.py -v
+            - cd ..
+            - cd 6-mocking && python -m pytest test_weather_service.py -v
+            - cd ..
+            - cd 10-database-testing && python -m pytest test_database.py -v
