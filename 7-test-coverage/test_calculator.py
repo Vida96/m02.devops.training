@@ -14,13 +14,31 @@ class TestCalculator(unittest.TestCase):
 
     def test_divide(self):
         self.assertEqual(calculator.divide(10, 2), 5)
+        with self.assertRaises(ValueError):
+            calculator.divide(10, 0)
 
     def test_power(self):
         self.assertEqual(calculator.power(2, 3), 8)
 
     def test_square_root(self):
         self.assertEqual(calculator.square_root(16), 4)
+        with self.assertRaises(ValueError):
+            calculator.square_root(-1)
+        self.assertEqual(calculator.square_root(0), 0)
+    
+    def test_modulo(self):
+        self.assertEqual(calculator.modulo(10, 3), 1)
+    
+    def test_is_even(self):
+        self.assertTrue(calculator.is_even(4))
+        self.assertFalse(calculator.is_even(5))
+    
+    def test_is_positive(self):
+        self.assertTrue(calculator.is_positive(5))
+        self.assertFalse(calculator.is_positive(-3))
 
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_factorial(self):
+        self.assertEqual(calculator.factorial(5), 120)
+        self.assertEqual(calculator.factorial(0), 1)
+        with self.assertRaises(ValueError):
+            calculator.factorial(-1)

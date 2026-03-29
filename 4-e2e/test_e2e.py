@@ -5,6 +5,12 @@ BASE_URL = "http://127.0.0.1:5000"
 
 
 class TestEndToEnd(unittest.TestCase):
+    def test_history(self):
+        response = requests.get(f"{BASE_URL}/history")
+        self.assertEqual(response.status_code, 200)
+        history = response.json()["history"]
+        self.assertIsInstance(history, list)
+
     def test_home_page(self):
         response = requests.get(f"{BASE_URL}/")
         self.assertEqual(response.status_code, 200)
