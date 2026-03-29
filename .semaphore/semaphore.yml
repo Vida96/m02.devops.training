@@ -35,4 +35,5 @@ blocks:
         - name: Tests
           commands:
             - cd 1-tdd && python -m pytest test_factorial.py -v
+            - cd ..
             - cd 2-unit-testing && python -m pytest test_math_sum.py -v
