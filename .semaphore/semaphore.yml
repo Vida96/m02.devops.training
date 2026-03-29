@@ -19,24 +19,20 @@ global_job_config:
       - checkout
       - mkdir -p .pip_cache
 blocks:
-  - name: "\U0001F9EA Test"
+  - name: Install dependencies
     dependencies: []
     task:
       jobs:
-        - name: "\U0001F7E2 Run Tests"
+        - name: Dependencies
           commands:
-            - echo "Checking out code..."
-            - echo "Installing dependencies..."
-            - echo "Running test suite..."
-            - echo "Tests completed successfully!"
-  - name: "\U0001F680 Deploy"
+            - cache restore
+            - pip install pytest requests flask coverage locust
+  - name: Tests
     dependencies:
-      - "\U0001F9EA Test"
+      - Install dependencies
     task:
       jobs:
-        - name: "\U0001F4E6 Deploy to Production"
+        - name: Tests
           commands:
-            - echo "Building application..."
-            - echo "Running security checks..."
-            - echo "Deploying to production..."
-            - echo "Deployment completed successfully!"
+            - cd 1-tdd && python -m pytest test_factorial.py -v
+            - cd 2-unit-testing && python -m pytest test_math_sum.py -v
