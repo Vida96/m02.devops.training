@@ -59,7 +59,8 @@ blocks:
         - name: End-to-end tests
           commands:
             - cache restore
-            - cd 4-e2e && nohup python app.py &
+            - cd 4-e2e
+            - nohup python app.py &
             - sleep 3
             - python -m pytest test_e2e.py -v
   - name: Test coverage
@@ -70,6 +71,7 @@ blocks:
         - name: Test coverage
           commands:
             - cache restore
+            - pip install coverage
             - cd 7-test-coverage
             - coverage run -m pytest test_calculator.py -v
             - coverage report -m
