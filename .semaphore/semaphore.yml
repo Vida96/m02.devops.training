@@ -59,9 +59,9 @@ blocks:
         - name: End-to-end tests
           commands:
             - cache restore
+            - cd 4-e2e
             - pip install -r requirements.txt
             - pip install flask_limiter
-            - cd 4-e2e
             - nohup python app.py &
             - '# wait until app is ready - running state'
             - 'until curl -s http://127.0.0.1:5000/health; do sleep 1; done'
