@@ -34,6 +34,7 @@ blocks:
       jobs:
         - name: Tests
           commands:
+            - cache restore
             - cd 1-tdd && python -m pytest test_factorial.py -v
             - cd ..
             - cd 2-unit-testing && python -m pytest test_math_sum.py -v
@@ -50,3 +51,43 @@ blocks:
             - cd 6-mocking && python -m pytest test_weather_service.py -v
             - cd ..
             - cd 10-database-testing && python -m pytest test_database.py -v
+  - name: End-to-end tests
+    dependencies:
+      - Integration tests
+    task:
+      jobs:
+        - name: End-to-end tests
+          commands:
+            - cache restore
+            - cd 4-e2e && nohup python app.py &
+            - sleep 3
+            - python -m pytest test_e2e.py -v
+  - name: Test coverage
+    dependencies:
+      - Tests
+    task:
+      jobs:
+        - name: Test coverage
+          commands:
+            - cache restore
+            - cd 7-test-coverage
+            - coverage run -m pytest test_calculator.py -v
+            - coverage report -m
+  - name: Test reports
+    dependencies:
+      - End-to-end tests
+    task:
+      jobs:
+        - name: Test reports
+          commands:
+            - cache restore
+            - cd 5-test-reports
+            - pip install -r requirements.txt
+            - pytest --junitxml=reports.xml
+            - '[[ -f report.xml ]] && test-results publish report.xml'
+after_pipeline:
+  task:
+    jobs:
+      - name: 'Job #1'
+        commands:
+          - test-results gen-pipeline-report
