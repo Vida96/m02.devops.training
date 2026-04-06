@@ -19,17 +19,18 @@ global_job_config:
       - checkout
       - mkdir -p .pip_cache
 blocks:
-  - name: Install dependencies
+  - name: Setup
     dependencies: []
     task:
       jobs:
-        - name: Dependencies
+        - name: Install Python Packages
           commands:
-            - pip install pytest requests flask coverage locust
+            - echo "Installing dependencies...."
+            - pip install pytest requests flask coverage locust flask-limiter
             - cache store
-  - name: Tests
+  - name: Unit Tests
     dependencies:
-      - Install dependencies
+      - Setup
     task:
       jobs:
         - name: Run Tests
@@ -41,9 +42,9 @@ blocks:
             - cd ..
             - 'cd 2-unit-testing '
             - python -m pytest test_math_sum.py -v
-  - name: Integration tests
+  - name: Integration Tests
     dependencies:
-      - Tests
+      - Unit Tests
     task:
       jobs:
         - name: Run Tests
@@ -57,9 +58,9 @@ blocks:
             - cd ..
             - 'cd 10-database-testing '
             - python -m pytest test_database.py -v
-  - name: End-to-end tests
+  - name: E2E Tests
     dependencies:
-      - Integration tests
+      - Integration Tests
     task:
       jobs:
         - name: Run Tests
@@ -72,9 +73,9 @@ blocks:
             - '# wait until app is ready - running state'
             - 'until curl -s http://127.0.0.1:5000/health; do sleep 1; done'
             - python -m pytest test_e2e.py -v
-  - name: Test coverage
+  - name: Coverage
     dependencies:
-      - Install dependencies
+      - Setup
     task:
       jobs:
         - name: Check coverage
@@ -85,8 +86,8 @@ blocks:
             - coverage report -m
   - name: Performance Tests
     dependencies:
-      - End-to-end tests
-      - Install dependencies
+      - E2E Tests
+      - Setup
     task:
       jobs:
         - name: Run Tests
@@ -112,6 +113,7 @@ blocks:
   - name: Security Tests
     dependencies:
       - Performance Tests
+      - Setup
     task:
       jobs:
         - name: Run Tests
@@ -132,7 +134,7 @@ blocks:
             - kill $APP_PID
   - name: Test Report
     dependencies:
-      - Install dependencies
+      - Setup
     task:
       jobs:
         - name: Make Report
@@ -144,6 +146,6 @@ blocks:
 after_pipeline:
   task:
     jobs:
-      - name: 'Pipeline Report '
+      - name: Pipeline Report
         commands:
           - test-results gen-pipeline-report
