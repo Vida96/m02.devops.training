@@ -25,41 +25,47 @@ blocks:
       jobs:
         - name: Dependencies
           commands:
-            - cache restore
             - pip install pytest requests flask coverage locust
+            - cache store
   - name: Tests
     dependencies:
       - Install dependencies
     task:
       jobs:
-        - name: Tests
+        - name: Run Tests
           commands:
             - cache restore
-            - cd 1-tdd && python -m pytest test_factorial.py -v
+            - 'cd 1-tdd '
+            - 'python -m pytest test_factorial.py -v '
+            - python -m pytest test_fibonacci.py -v
             - cd ..
-            - cd 2-unit-testing && python -m pytest test_math_sum.py -v
+            - 'cd 2-unit-testing '
+            - python -m pytest test_math_sum.py -v
   - name: Integration tests
     dependencies:
       - Tests
     task:
       jobs:
-        - name: Integration tests
+        - name: Run Tests
           commands:
             - cache restore
-            - cd 3-integration-testing && python -m pytest test_integration.py -v
+            - 'cd 3-integration-testing '
+            - 'python -m pytest test_integration.py -v '
             - cd ..
-            - cd 6-mocking && python -m pytest test_weather_service.py -v
+            - 'cd 6-mocking '
+            - 'python -m pytest test_weather_service.py -v '
             - cd ..
-            - cd 10-database-testing && python -m pytest test_database.py -v
+            - 'cd 10-database-testing '
+            - python -m pytest test_database.py -v
   - name: End-to-end tests
     dependencies:
       - Integration tests
     task:
       jobs:
-        - name: End-to-end tests
+        - name: Run Tests
           commands:
             - cache restore
-            - cd 4-e2e
+            - 'cd 4-e2e '
             - pip install -r requirements.txt
             - pip install flask_limiter
             - nohup python app.py &
@@ -68,31 +74,65 @@ blocks:
             - python -m pytest test_e2e.py -v
   - name: Test coverage
     dependencies:
-      - Tests
+      - Install dependencies
     task:
       jobs:
-        - name: Test coverage
+        - name: Test Report
           commands:
-            - cache restore
-            - pip install coverage
-            - cd 7-test-coverage
-            - coverage run -m pytest test_calculator.py -v
-            - coverage report -m
-  - name: Test reports
-    dependencies:
-      - End-to-end tests
-    task:
-      jobs:
-        - name: Test reports
-          commands:
-            - cache restore
             - cd 5-test-reports
             - pip install -r requirements.txt
-            - pytest --junitxml=reports.xml
+            - pytest --junitxml=report.xml
             - '[[ -f report.xml ]] && test-results publish report.xml'
+  - name: Performance Tests
+    dependencies:
+      - End-to-end tests
+      - Install dependencies
+    task:
+      jobs:
+        - name: Run Tests
+          commands:
+            - 'set -e  # fail fast if anything breaks'
+            - '#export DISABLE_RATE_LIMIT=1'
+            - '# Install dependencies'
+            - cd 4-e2e
+            - pip install -r requirements.txt
+            - pip install flask_limiter
+            - cd ..
+            - cd 8-performance-testing
+            - pip install locust
+            - '# Start Flask app in background'
+            - 'python -c "import sys; sys.path.insert(0, ''../4-e2e''); from app import app; app.run()" > flask.log 2>&1 &'
+            - APP_PID=$!
+            - '# wait until app is ready - running state'
+            - 'until curl -s http://127.0.0.1:5000/health; do sleep 1; done'
+            - '# Run Locust (this will block until finished)'
+            - 'locust -f locustfile.py --host=http://127.0.0.1:5000 --headless -u 10 -r 2 --run-time 30s'
+            - '# Kill Flask app after test'
+            - kill $APP_PID
+  - name: Security Tests
+    dependencies:
+      - Performance Tests
+    task:
+      jobs:
+        - name: Run Tests
+          commands:
+            - '# Install dependencies'
+            - cd 4-e2e
+            - pip install -r requirements.txt
+            - pip install flask_limiter
+            - cd ..
+            - 'cd 9-security-testing '
+            - '# Start Flask app in background'
+            - 'python -c "import sys; sys.path.insert(0, ''../4-e2e''); from app import app; app.run()" > flask.log 2>&1 &'
+            - APP_PID=$!
+            - '# wait until app is ready - running state'
+            - 'until curl -s http://127.0.0.1:5000/health; do sleep 1; done'
+            - python -m pytest test_security.py -v
+            - '# Kill Flask app after test'
+            - kill $APP_PID
 after_pipeline:
   task:
     jobs:
-      - name: 'Job #1'
+      - name: 'Pipeline Report '
         commands:
           - test-results gen-pipeline-report
