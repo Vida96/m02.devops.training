@@ -110,7 +110,7 @@ blocks:
             - 'locust -f locustfile.py --host=http://127.0.0.1:5000 --headless -u 10 -r 2 --run-time 30s'
             - '# Kill Flask app after test'
             - kill $APP_PID
-  - name: Security Tests
+  - name: 'Security Tests '
     dependencies:
       - Performance Tests
       - Setup
